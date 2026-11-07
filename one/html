@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lighthouse English - Nhận Xét Học Sinh</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ocean: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Lexend', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #075985 100%); }
+        .card-shadow { box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.1), 0 8px 10px -6px rgba(2, 132, 199, 0.1); }
+        @media print {
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-12">
+
+    <!-- HEADER / BRANDING -->
+    <header class="gradient-bg text-white shadow-lg relative overflow-hidden no-print">
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                
+                <!-- Logo & Tên Trung Tâm -->
+                <div class="flex items-center space-x-4 text-center sm:text-left">
+                    <img src="Logo tròn Lien (1).png" alt="Lighthouse English Logo" 
+                         class="w-20 h-20 md:w-24 md:h-24 object-contain rounded-full border-2 border-white shadow-md bg-white p-1"
+                         onerror="this.src='https://via.placeholder.com/100?text=Lighthouse'">
+                    <div>
+                        <div class="inline-block bg-sky-400/30 text-sky-100 text-xs px-3 py-1 rounded-full font-semibold uppercase tracking-wider mb-1">
+                            Lighthouse English By Ms Linda
+                        </div>
+                        <h1 id="displayClassName" class="text-2xl sm:text-3xl font-extrabold tracking-tight">LỚP FLYERS 7</h1>
+                        <p id="displaySchedule" class="text-sky-100 text-sm mt-1 flex items-center justify-center sm:justify-start gap-1">
+                            <i class="far font-normal fa-clock"></i> Lịch học: 19:30 Thứ Ba – Thứ Sáu
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Chế độ Giáo Viên & Bộ Lọc -->
+                <div class="flex flex-col items-end gap-3 w-full sm:w-auto">
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <button onclick="window.print()" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-semibold px-3 py-2 rounded-xl text-sm transition-all flex items-center gap-1.5">
+                            <i class="fas fa-print"></i> In Báo Cáo
+                        </button>
+                        <button id="toggleEditBtn" onclick="toggleEditMode()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold px-4 py-2 rounded-xl text-sm transition-all shadow flex items-center gap-2">
+                            <i class="fas fa-edit"></i> <span id="editBtnText">Chế độ Sửa</span>
+                        </button>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <div class="bg-white/10 backdrop-blur-md p-1.5 rounded-xl flex items-center gap-2 w-full sm:w-auto">
+                            <select id="classSelect" onchange="changeClass(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 shadow-sm border-0">
+                                <!-- Dynamic Options -->
+                            </select>
+                            <select id="unitSelect" onchange="changeUnit(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 shadow-sm border-0">
+                                <option value="Buổi 6.11.2026">Buổi 6.11.2026</option>
+                                <option value="Unit 1: Back to School">Unit 1: Back to School</option>
+                                <option value="Unit 2: Family & Friends">Unit 2: Family & Friends</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- THANH CÔNG CỤ GIÁO VIÊN (HIỂN THỊ KHI BẬT CHẾ ĐỘ SỬA) -->
+    <div id="teacherToolbar" class="hidden bg-amber-50 border-b border-amber-200 py-3 px-4 shadow-inner no-print">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-sm">
+            <div class="flex items-center gap-2 text-amber-800 font-medium">
+                <i class="fas fa-tools text-amber-600"></i> Đang ở Chế độ Giáo viên Chỉnh Sửa
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="editClassDetails()" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                    <i class="fas fa-pen"></i> Sửa Tên Lớp & Lịch
+                </button>
+                <button onclick="addNewClass()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                    <i class="fas fa-plus-circle"></i> Thêm Lớp Mới
+                </button>
+                <button onclick="addNewStudent()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                    <i class="fas fa-user-plus"></i> Thêm Học Sinh
+                </button>
+                <button onclick="exportJSONData()" class="bg-violet-600 hover:bg-violet-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                    <i class="fas fa-code"></i> Xuất JSON
+                </button>
+                <button onclick="resetData()" class="bg-slate-600 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                    <i class="fas fa-undo"></i> Khôi Phục Mặc Định
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NỘI DUNG CHÍNH -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+
+        <!-- THÔNG BÁO TIỆN ÍCH -->
+        <div class="bg-sky-50 border border-sky-200 text-sky-800 px-4 py-3 rounded-2xl mb-6 text-sm flex items-center justify-between no-print">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-info-circle text-sky-600 text-base"></i>
+                <span>Gửi bảng nhận xét: Chọn <strong>"Link"</strong> hoặc <strong>"Xem"</strong> để xem thẻ cá nhân và copy tin nhắn Zalo gửi phụ huynh.</span>
+            </div>
+        </div>
+
+        <!-- BẢNG DANH SÁCH HỌC SINH -->
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden border border-slate-100">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-sky-900 text-white text-xs uppercase tracking-wider">
+                            <th class="py-4 px-4 text-center w-12">STT</th>
+                            <th class="py-4 px-4">Học Sinh</th>
+                            <th class="py-4 px-4">Thông Tin Phụ Huynh</th>
+                            <th class="py-4 px-4 text-center">Vắng</th>
+                            <th class="py-4 px-4">Thái Độ Học Tập</th>
+                            <th class="py-4 px-4">Tinh Thần Học</th>
+                            <th class="py-4 px-4">Bài Tập Về Nhà</th>
+                            <th class="py-4 px-4 text-center no-print">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- Student Rows Rendered Here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL CARD BÁO CÁO CÁ NHÂN -->
+    <div id="studentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl transform transition-all border border-sky-100">
+            <!-- Header Modal -->
+            <div class="gradient-bg text-white p-6 relative">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-white/80 hover:text-white bg-black/10 hover:bg-black/20 rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="flex items-center gap-4">
+                    <img id="modalAvatar" src="" class="w-16 h-16 rounded-full border-2 border-white bg-white shadow-md object-cover">
+                    <div>
+                        <span id="modalSticker" class="inline-block bg-amber-400 text-slate-900 text-xs font-bold px-2.5 py-0.5 rounded-full mb-1">🌟 Super Star</span>
+                        <h2 id="modalStudentName" class="text-xl font-bold">Vũ Minh Thư</h2>
+                        <p id="modalClassName" class="text-sky-100 text-xs">Lớp Flyers 7 - Lighthouse English</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Modal -->
+            <div class="p-6 space-y-4">
+                <!-- Stars Breakdown -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Đánh Giá Kỹ Năng Buổi Học</h4>
+                    <div class="grid grid-cols-2 gap-3 text-xs" id="modalSkills">
+                        <!-- Dynamic Skills -->
+                    </div>
+                </div>
+
+                <!-- Detailed Comment -->
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider">Lời Nhận Xét Từ Ms Linda</h4>
+                    <div class="bg-sky-50 border border-sky-100 p-4 rounded-2xl text-slate-700 text-sm leading-relaxed" id="modalComment">
+                        Con học hành rất nghiêm túc, hăng hái phát biểu và hoàn thành xuất sắc các bài tập trên lớp!
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-2 flex gap-3">
+                    <button onclick="copyCurrentStudentZalo()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow">
+                        <i class="fab fa-whatsapp"></i> Copy Nhận Xét Zalo
+                    </button>
+                    <button onclick="closeModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-sm">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT CHÍNH XỬ LÝ LOGIC & DỮ LIỆU -->
+    <script>
+        // Dữ liệu mẫu 6 lớp
+        const defaultData = {
+            "flyers7": {
+                name: "LỚP FLYERS 7",
+                schedule: "19:30 Thứ Ba – Thứ Sáu",
+                students: [
+                    { id: 1, name: "Vũ Minh Thư", parent: "Yến Nhi", absent: "0", attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, hăng hái phát biểu", hw: "Đã hoàn thành", stars: 5, sticker: "🌟 Super Star", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Thien" },
+                    { id: 2, name: "Kim Ngân", parent: "Nhungdo", absent: "0", attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, hăng hái phát biểu", hw: "Đã hoàn thành", stars: 5, sticker: "📚 Active Reader", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Ngan" },
+                    { id: 3, name: "Đức Quang", parent: "Lindatran", absent: "01", attitude: "TẬP TRUNG", spirit: "Con chú ý lắng nghe, làm bài tốt", hw: "Cần cố gắng thêm", stars: 4, sticker: "🎤 Active Speaker", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Quang" },
+                    { id: 4, name: "Phương Anh", parent: "Hoàng Vân", absent: "0", attitude: "TẬP TRUNG", spirit: "Con tích cực tham gia hoạt động", hw: "Đã hoàn thành", stars: 5, sticker: "🌟 Super Star", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Anh" },
+                    { id: 5, name: "Minh Quang", parent: "Đặng Cẩm Vân", absent: "0", attitude: "TẬP TRUNG", spirit: "Con phát âm chuẩn, tương tác tốt", hw: "Đã hoàn thành", stars: 5, sticker: "📝 Homework Hero", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Minh" }
+                ]
+            },
+            "movers2": {
+                name: "LỚP MOVERS 2",
+                schedule: "17:30 Thứ Hai – Thứ Năm",
+                students: [
+                    { id: 1, name: "Bảo An", parent: "Mẹ An", absent: "0", attitude: "TẬP TRUNG", spirit: "Học sôi nổi, phát âm hay", hw: "Đã hoàn thành", stars: 5, sticker: "🌟 Super Star", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=An" },
+                    { id: 2, name: "Gia Huy", parent: "Bố Huy", absent: "0", attitude: "CẦN TẬP TRUNG", spirit: "Cần chú ý hơn trong giờ", hw: "Chưa làm xong", stars: 3, sticker: "💪 Keep Trying", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Huy" }
+                ]
+            },
+            "starters1": {
+                name: "LỚP STARTERS 1",
+                schedule: "18:00 Thứ Bảy – Chủ Nhật",
+                students: [
+                    { id: 1, name: "Khánh Vy", parent: "Mẹ Vy", absent: "0", attitude: "NGOAN NHOÃN", spirit: "Mạnh dạn phát biểu", hw: "Đã hoàn thành", stars: 5, sticker: "💖 Cute Bee", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Vy" }
+                ]
+            },
+            "gs3": {
+                name: "GLOBAL SUCCESS 3",
+                schedule: "19:00 Thứ Tư – Chủ Nhật",
+                students: []
+            },
+            "gs4": {
+                name: "GLOBAL SUCCESS 4",
+                schedule: "19:30 Thứ Hai – Thứ Sáu",
+                students: []
+            },
+            "jp": {
+                name: "JOLLY PHONICS",
+                schedule: "17:00 Thứ Bảy – Chủ Nhật",
+                students: []
+            }
+        };
+
+        // State Management
+        let appData = JSON.parse(localStorage.getItem('lighthouse_app_data')) || defaultData;
+        let currentClassKey = 'flyers7';
+        let isEditMode = false;
+        let activeStudent = null;
+
+        // Init App
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const classParam = urlParams.get('class');
+            const studentParam = urlParams.get('student');
+
+            if (classParam && appData[classParam]) {
+                currentClassKey = classParam;
+            }
+
+            renderClassSelectOptions();
+            renderApp();
+
+            if (studentParam) {
+                const st = appData[currentClassKey].students.find(s => s.id == studentParam);
+                if (st) openStudentModal(st);
+            }
+        };
+
+        function saveData() {
+            localStorage.setItem('lighthouse_app_data', JSON.stringify(appData));
+        }
+
+        // Render Dropdown Lớp
+        function renderClassSelectOptions() {
+            const select = document.getElementById('classSelect');
+            select.innerHTML = '';
+            Object.keys(appData).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = appData[key].name;
+                if (key === currentClassKey) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderApp() {
+            const currentClass = appData[currentClassKey];
+            if (!currentClass) return;
+
+            document.getElementById('displayClassName').textContent = currentClass.name;
+            document.getElementById('displaySchedule').innerHTML = `<i class="far fa-clock"></i> Lịch học: ${currentClass.schedule}`;
+            document.getElementById('classSelect').value = currentClassKey;
+
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+
+            if (currentClass.students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">Chưa có danh sách học sinh cho lớp này. Hãy bật Chế độ Sửa để thêm!</td></tr>`;
+                return;
+            }
+
+            currentClass.students.forEach((st, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = idx % 2 === 0 ? 'bg-sky-50/40 hover:bg-sky-100/50 transition' : 'bg-white hover:bg-sky-100/50 transition';
+                
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 text-center font-bold text-slate-600">${idx + 1}</td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-800 flex items-center gap-2">
+                        <img src="${st.avatar}" class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 object-cover">
+                        <span>${st.name}</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-600">${st.parent || '-'}</td>
+                    <td class="py-3.5 px-4 text-center font-semibold ${st.absent !== '0' ? 'text-amber-600' : 'text-slate-400'}">${st.absent}</td>
+                    <td class="py-3.5 px-4">
+                        <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold ${st.attitude.includes('TẬP TRUNG') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                            ${st.attitude}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-700">${st.spirit}</td>
+                    <td class="py-3.5 px-4 text-slate-700">${st.hw}</td>
+                    <td class="py-3.5 px-4 text-center no-print">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick='openStudentModalDirect(${JSON.stringify(st)})' class="bg-sky-600 hover:bg-sky-700 text-white text-xs px-2.5 py-1.5 rounded-lg font-semibold flex items-center gap-1 shadow-sm">
+                                <i class="fas fa-id-card"></i> Xem
+                            </button>
+                            <button onclick="copyStudentLink(${st.id})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs px-2 py-1.5 rounded-lg font-semibold border border-indigo-200" title="Copy Link Cá Nhân">
+                                <i class="fas fa-link"></i> Link
+                            </button>
+                            ${isEditMode ? `
+                                <button onclick="editStudent(${st.id})" class="bg-amber-500 text-white text-xs p-1.5 rounded-lg"><i class="fas fa-pen"></i></button>
+                                <button onclick="deleteStudent(${st.id})" class="bg-rose-500 text-white text-xs p-1.5 rounded-lg"><i class="fas fa-trash"></i></button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Toggle Edit Mode
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('toggleEditBtn');
+            const toolbar = document.getElementById('teacherToolbar');
+            
+            if (isEditMode) {
+                btn.className = 'bg-rose-500 hover:bg-rose-600 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all shadow flex items-center gap-2';
+                document.getElementById('editBtnText').textContent = 'Thoát Sửa';
+                toolbar.classList.remove('hidden');
+            } else {
+                btn.className = 'bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold px-4 py-2 rounded-xl text-sm transition-all shadow flex items-center gap-2';
+                document.getElementById('editBtnText').textContent = 'Chế độ Sửa';
+                toolbar.classList.add('hidden');
+            }
+            renderApp();
+        }
+
+        // Đổi Lớp
+        function changeClass(key) {
+            currentClassKey = key;
+            renderApp();
+        }
+
+        // Sửa Tên Lớp & Lịch Học -> Tự động cập nhật menu dropdown phía trên
+        function editClassDetails() {
+            const current = appData[currentClassKey];
+            const newName = prompt("Nhập tên lớp mới:", current.name);
+            if (newName === null) return;
+            const newSchedule = prompt("Nhập lịch học mới:", current.schedule);
+            if (newSchedule === null) return;
+
+            appData[currentClassKey].name = newName || current.name;
+            appData[currentClassKey].schedule = newSchedule || current.schedule;
+            
+            saveData();
+            renderClassSelectOptions(); // Cập nhật đồng bộ Dropdown
+            renderApp();
+        }
+
+        // Thêm Lớp Mới
+        function addNewClass() {
+            const classKey = prompt("Nhập mã lớp ngắn (viết liền không dấu, ví dụ: movers3):");
+            if (!classKey) return;
+            if (appData[classKey]) {
+                alert("Mã lớp này đã tồn tại!");
+                return;
+            }
+            const className = prompt("Nhập tên hiển thị lớp (Ví dụ: LỚP MOVERS 3):", "LỚP MỚI");
+            const schedule = prompt("Nhập lịch học:", "19:00 Thứ Ba - Thứ Sáu");
+
+            appData[classKey] = {
+                name: className || "LỚP MỚI",
+                schedule: schedule || "Chưa xếp lịch",
+                students: []
+            };
+
+            currentClassKey = classKey;
+            saveData();
+            renderClassSelectOptions(); // Cập nhật dropdown
+            renderApp();
+        }
+
+        // Thêm Học Sinh
+        function addNewStudent() {
+            const name = prompt("Tên học sinh:");
+            if (!name) return;
+            const parent = prompt("Tên Phụ huynh (Zalo/ĐT):", "Phụ huynh");
+            
+            const newSt = {
+                id: Date.now(),
+                name: name,
+                parent: parent || "Phụ huynh",
+                absent: "0",
+                attitude: "TẬP TRUNG",
+                spirit: "Con học hành ngoan ngoãn, hăng hái",
+                hw: "Đã hoàn thành",
+                stars: 5,
+                sticker: "🌟 Super Star",
+                avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`
+            };
+
+            appData[currentClassKey].students.push(newSt);
+            saveData();
+            renderApp();
+        }
+
+        // Sửa Học Sinh
+        function editStudent(id) {
+            const st = appData[currentClassKey].students.find(s => s.id === id);
+            if (!st) return;
+
+            const newName = prompt("Tên học sinh:", st.name);
+            if (newName === null) return;
+            const newSpirit = prompt("Nhận xét tinh thần học tập:", st.spirit);
+            const newHw = prompt("Tình trạng bài tập về nhà:", st.hw);
+
+            st.name = newName || st.name;
+            st.spirit = newSpirit || st.spirit;
+            st.hw = newHw || st.hw;
+
+            saveData();
+            renderApp();
+        }
+
+        // Xóa Học Sinh
+        function deleteStudent(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa học sinh này?")) {
+                appData[currentClassKey].students = appData[currentClassKey].students.filter(s => s.id !== id);
+                saveData();
+                renderApp();
+            }
+        }
+
+        // Xuất JSON Backup
+        function exportJSONData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "lighthouse_data_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // Reset Data
+        function resetData() {
+            if (confirm("Khôi phục toàn bộ dữ liệu mẫu ban đầu?")) {
+                localStorage.removeItem('lighthouse_app_data');
+                appData = JSON.parse(JSON.stringify(defaultData));
+                currentClassKey = 'flyers7';
+                renderClassSelectOptions();
+                renderApp();
+            }
+        }
+
+        // Modal Functions
+        function openStudentModalDirect(st) {
+            openStudentModal(st);
+        }
+
+        function openStudentModal(st) {
+            activeStudent = st;
+            document.getElementById('modalStudentName').textContent = st.name;
+            document.getElementById('modalClassName').textContent = `${appData[currentClassKey].name} - Lighthouse English`;
+            document.getElementById('modalAvatar').src = st.avatar;
+            document.getElementById('modalSticker').textContent = st.sticker;
+            document.getElementById('modalComment').textContent = st.spirit + ". Bài tập về nhà: " + st.hw + ".";
+
+            const skillsContainer = document.getElementById('modalSkills');
+            skillsContainer.innerHTML = `
+                <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-100">
+                    <span class="text-slate-600 font-medium">Từ Vựng & Ngữ Pháp</span>
+                    <span class="text-amber-400 font-bold">⭐⭐⭐⭐⭐</span>
+                </div>
+                <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-100">
+                    <span class="text-slate-600 font-medium">Nghe & Phát Âm</span>
+                    <span class="text-amber-400 font-bold">⭐⭐⭐⭐⭐</span>
+                </div>
+                <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-100">
+                    <span class="text-slate-600 font-medium">Thái Độ Tương Tác</span>
+                    <span class="text-amber-400 font-bold">⭐⭐⭐⭐⭐</span>
+                </div>
+                <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-100">
+                    <span class="text-slate-600 font-medium">Hoàn Thành Bài Tập</span>
+                    <span class="text-emerald-600 font-bold">Đạt</span>
+                </div>
+            `;
+
+            document.getElementById('studentModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('studentModal').classList.add('hidden');
+        }
+
+        // Copy Links & Zalo
+        function copyStudentLink(studentId) {
+            const url = `${window.location.origin}${window.location.pathname}?class=${currentClassKey}&student=${studentId}`;
+            navigator.clipboard.writeText(url).then(() => {
+                alert("Đã copy link báo cáo cá nhân của bé! Hãy gửi link này cho phụ huynh.");
+            });
+        }
+
+        function copyCurrentStudentZalo() {
+            if (!activeStudent) return;
+            const text = `🌟 [LIGHTHOUSE ENGLISH BY MS LINDA] 🌟\n-----------------------------\nBáo cáo học tập lớp: ${appData[currentClassKey].name}\nHọc sinh: ${activeStudent.name}\n- Thái độ học tập: ${activeStudent.attitude}\n- Tinh thần bài học: ${activeStudent.spirit}\n- Bài tập về nhà: ${activeStudent.hw}\n👉 Xem bảng chi tiết tại: ${window.location.origin}${window.location.pathname}?class=${currentClassKey}&student=${activeStudent.id}`;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Đã copy tin nhắn Zalo! Cô chỉ cần vào Zalo dán (Ctrl+V) để gửi cho phụ huynh.");
+            });
+        }
+    </script>
+</body>
+</html>
