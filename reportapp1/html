@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lighthouse English - Quản Lý Nhận Xét Học Sinh</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Quicksand & Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for Celebration effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            purple: '#4c1d95',
+                            darkPurple: '#3b0764',
+                            pink: '#ec4899',
+                            softPink: '#fce7f3',
+                            lightPurple: '#f3e8ff',
+                            accent: '#f59e0b',
+                            teal: '#0d9488'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito', 'Quicksand', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #faf5ff;
+            background-image: radial-gradient(#e9d5ff 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #f3e8ff;
+        }
+        .header-gradient {
+            background: linear-gradient(135deg, #4c1d95 0%, #7e22ce 50%, #ec4899 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c084fc;
+            border-radius: 10px;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; }
+            .glass-card { border: none; box-shadow: none; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 ease-in-out bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-purple-400">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-xl"></i>
+        <span id="toast-message" class="font-bold text-sm">Đã lưu thay đổi thành công!</span>
+    </div>
+
+    <!-- EDIT STUDENT MODAL -->
+    <div id="student-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border-4 border-purple-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-purple-950 text-white px-6 py-4 flex justify-between items-center">
+                <h3 id="modal-title" class="font-black text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-user-pen text-pink-400"></i> Chỉnh Sửa Nhận Xét Học Sinh
+                </h3>
+                <button onclick="closeStudentModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-4 text-sm font-semibold">
+                <input type="hidden" id="edit-std-id">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Họ và tên học sinh</label>
+                        <input type="text" id="edit-std-name" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-purple-600 focus:outline-none font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tên Phụ Huynh / Zalo</label>
+                        <input type="text" id="edit-std-parent" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-purple-600 focus:outline-none font-bold">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Trạng thái vắng</label>
+                        <select id="edit-std-absent" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-purple-600 focus:outline-none font-bold">
+                            <option value="0">Đi học đầy đủ (0)</option>
+                            <option value="1">Vắng có phép (01)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Thái độ học tập</label>
+                        <input type="text" id="edit-std-attitude" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-purple-600 focus:outline-none font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Avatar (Emoji)</label>
+                        <input type="text" id="edit-std-avatar" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-purple-600 focus:outline-none font-bold text-center text-xl" value="👧">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tinh thần phát biểu / Xây dựng bài</label>
+                    <input type="text" id="edit-std-spirit" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-purple-600 focus:outline-none font-bold">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Bài tập về nhà (HW)</label>
+                        <input type="text" id="edit-std-hw" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-purple-600 focus:outline-none font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Danh hiệu / Sticker</label>
+                        <select id="edit-std-sticker" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-purple-600 focus:outline-none font-bold">
+                            <option value="Super Star 🌟">Super Star 🌟</option>
+                            <option value="Active Speaker 🎤">Active Speaker 🎤</option>
+                            <option value="Homework Hero 📝">Homework Hero 📝</option>
+                            <option value="Good Try 👍">Good Try 👍</option>
+                            <option value="Star Student ⭐">Star Student ⭐</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Star Ratings -->
+                <div class="bg-purple-50 p-4 rounded-2xl border border-purple-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-purple-900 uppercase mb-1">Từ vựng (1-5)</label>
+                        <input type="number" min="1" max="5" id="edit-vocab" class="w-full px-3 py-2 rounded-xl border border-purple-200 bg-white text-center font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-purple-900 uppercase mb-1">Phát âm (1-5)</label>
+                        <input type="number" min="1" max="5" id="edit-speaking" class="w-full px-3 py-2 rounded-xl border border-purple-200 bg-white text-center font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-purple-900 uppercase mb-1">Thái độ (1-5)</label>
+                        <input type="number" min="1" max="5" id="edit-attitude-score" class="w-full px-3 py-2 rounded-xl border border-purple-200 bg-white text-center font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-purple-900 uppercase mb-1">Bài tập (1-5)</label>
+                        <input type="number" min="1" max="5" id="edit-hw-score" class="w-full px-3 py-2 rounded-xl border border-purple-200 bg-white text-center font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nhận xét chi tiết của giáo viên</label>
+                    <textarea id="edit-std-comment" rows="3" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-purple-600 focus:outline-none font-semibold"></textarea>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
+                <button onclick="closeStudentModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-colors">
+                    Hủy
+                </button>
+                <button onclick="saveStudentModal()" class="px-5 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl shadow-md transition-all">
+                    Lưu Thay Đổi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXPORT CODE MODAL -->
+    <div id="export-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border-4 border-purple-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-purple-950 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-black text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-code text-pink-400"></i> Xuất Dữ Liệu / Sao Chép JSON
+                </h3>
+                <button onclick="closeExportModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-4">
+                <p class="text-xs font-bold text-slate-600">
+                    Toàn bộ dữ liệu bạn vừa chỉnh sửa được lưu trên trình duyệt này. Bạn có thể copy đoạn JSON dưới đây để sao lưu hoặc cập nhật vào mã nguồn khi đưa lên GitHub Pages.
+                </p>
+                <textarea id="export-json-area" rows="12" class="w-full p-4 rounded-xl border-2 border-slate-200 font-mono text-xs bg-slate-50 focus:outline-none" readonly></textarea>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-between items-center">
+                <button onclick="resetToDefaultData()" class="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-xl transition-colors">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Khôi phục mặc định ban đầu
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeExportModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl">Đóng</button>
+                    <button onclick="copyExportJson()" class="px-5 py-2 bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs rounded-xl shadow-md">
+                        <i class="fa-solid fa-copy mr-1"></i> Copy Dữ Liệu JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app" class="w-full max-w-7xl mx-auto p-3 sm:p-6">
+
+        <!-- BRAND HEADER -->
+        <header class="header-gradient rounded-3xl p-6 sm:p-8 text-white shadow-xl mb-6 relative overflow-hidden border-4 border-white/20">
+            <!-- Decorative Background SVGs -->
+            <div class="absolute -right-10 -bottom-10 opacity-15 pointer-events-none">
+                <i class="fa-solid fa-graduation-cap text-9xl"></i>
+            </div>
+            <div class="absolute right-1/3 -top-10 opacity-10 pointer-events-none">
+                <i class="fa-solid fa-star text-9xl"></i>
+            </div>
+
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                <!-- Logo & Brand Name -->
+                <div class="flex items-center gap-4 text-center md:text-left">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white p-2 shadow-lg flex items-center justify-center shrink-0 border-2 border-pink-300 transform rotate-2 hover:rotate-0 transition-transform">
+                        <div class="text-center">
+                            <i class="fa-solid fa-lighthouse text-3xl sm:text-4xl text-purple-700"></i>
+                            <span class="block text-[10px] font-black text-pink-600 uppercase tracking-tighter mt-1">LIGHTHOUSE</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="inline-flex items-center gap-2 bg-pink-500/30 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase border border-pink-300/30 text-pink-100 mb-1">
+                            <i class="fa-solid fa-award text-yellow-300"></i> LIGHTHOUSE ACADEMY • BY MS LINDA
+                        </div>
+                        <h1 class="text-2xl sm:text-4xl font-black tracking-tight drop-shadow-md" id="header-title">
+                            BẢNG NHẬN XÉT HỌC TẬP
+                        </h1>
+                        <p class="text-purple-100 text-xs sm:text-sm font-medium mt-1 flex items-center justify-center md:justify-start gap-2">
+                            <i class="fa-regular fa-calendar-check"></i> <span id="header-date">Lịch học: 19:30 Thứ Ba – Thứ Sáu</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls & Teacher Edit Mode Toggle -->
+                <div id="controls-panel" class="no-print bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-1 uppercase tracking-wider">Chọn Lớp Học</label>
+                        <select id="class-select" onchange="changeClass(this.value)" class="w-full sm:w-44 bg-white text-slate-800 font-bold text-sm px-4 py-2.5 rounded-xl border-2 border-pink-300 focus:outline-none shadow-md cursor-pointer">
+                            <option value="flyers7">Lớp Flyers 7</option>
+                            <option value="movers2">Lớp Movers 2</option>
+                            <option value="starters1">Lớp Starters 1</option>
+                            <option value="gs3">Global Success 3</option>
+                            <option value="gs4">Global Success 4</option>
+                            <option value="phonics">Jolly Phonics</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-purple-200 mb-1 uppercase tracking-wider">Buổi Học / Unit</label>
+                        <select id="lesson-select" onchange="changeLesson(this.value)" class="w-full sm:w-48 bg-white text-slate-800 font-bold text-sm px-4 py-2.5 rounded-xl border-2 border-pink-300 focus:outline-none shadow-md cursor-pointer">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Teacher Mode Button -->
+                    <div class="sm:self-end">
+                        <button id="teacher-mode-btn" onclick="toggleTeacherMode()" class="w-full sm:w-auto px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 uppercase tracking-wide">
+                            <i class="fa-solid fa-lock" id="teacher-mode-icon"></i> <span id="teacher-mode-text">Chế độ Sửa</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- TEACHER EDIT TOOLBAR (Appears when Teacher Mode is ON) -->
+        <div id="teacher-toolbar" class="hidden no-print bg-amber-100 border-2 border-amber-300 p-4 rounded-2xl mb-6 flex flex-wrap items-center justify-between gap-4 shadow-md">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg">
+                    <i class="fa-solid fa-user-gear"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-black text-amber-900 uppercase block">ĐANG BẬT CHẾ ĐỘ GIÁO VIÊN CHỈNH SỬA</span>
+                    <span class="text-xs font-medium text-amber-800">Bạn có thể sửa tên lớp, lịch học, thêm/xóa học sinh hoặc bấm Sửa ở từng bé.</span>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="openClassSettings()" class="px-4 py-2 bg-white hover:bg-amber-50 text-amber-900 font-bold text-xs rounded-xl border border-amber-300 shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-pen-to-square"></i> Sửa Tên Lớp & Lịch
+                </button>
+                <button onclick="addNewStudent()" class="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-plus"></i> Thêm Học Sinh Mới
+                </button>
+                <button onclick="openExportModal()" class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-code"></i> Xuất / Backup JSON
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW CONTAINER 1: CLASS DASHBOARD -->
+        <main id="class-dashboard" class="space-y-6">
+            
+            <!-- Quick Stats Bar -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-card p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 block uppercase">Sĩ Số Lớp</span>
+                        <span id="stat-total" class="text-2xl font-black text-purple-900">0</span>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 block uppercase">Đi Học Đầy Đủ</span>
+                        <span id="stat-present" class="text-2xl font-black text-emerald-600">0</span>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 block uppercase">Tải Bài Tốt</span>
+                        <span id="stat-good-hw" class="text-2xl font-black text-amber-600">0</span>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 block uppercase">Học Sinh Xuất Sắc</span>
+                        <span id="stat-top-student" class="text-sm font-black text-pink-600 truncate max-w-[110px] block">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Class Report Table Card -->
+            <div class="glass-card rounded-3xl shadow-xl border border-purple-100 overflow-hidden">
+                <div class="px-6 py-4 bg-purple-900 text-white flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <span id="class-badge" class="px-3 py-1 bg-pink-500 text-white font-extrabold text-xs rounded-full uppercase">LỚP FLYERS 7</span>
+                        <h2 id="lesson-title-display" class="font-black text-lg sm:text-xl">Báo Cáo Buổi Học</h2>
+                    </div>
+                    <div class="text-xs font-bold bg-white/10 px-3 py-1.5 rounded-lg border border-white/20">
+                        <i class="fa-solid fa-circle-info text-pink-300 mr-1"></i> Bấm "Báo Cáo" để xem thẻ chi tiết của từng bé
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-purple-950 text-purple-100 font-extrabold text-xs uppercase tracking-wider">
+                                <th class="p-4 text-center w-14">STT</th>
+                                <th class="p-4 min-w-[160px]">Học Sinh</th>
+                                <th class="p-4 min-w-[140px]">Phụ Huynh / Zalo</th>
+                                <th class="p-4 text-center min-w-[90px]">Vắng</th>
+                                <th class="p-4 min-w-[140px]">Thái Độ Học Tập</th>
+                                <th class="p-4 min-w-[220px]">Tinh Thần Học Bài</th>
+                                <th class="p-4 min-w-[150px]">Bài Tập Về Nhà</th>
+                                <th class="p-4 text-center min-w-[180px] no-print">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-table-body" class="divide-y divide-purple-100 text-sm font-semibold">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- VIEW CONTAINER 2: INDIVIDUAL STUDENT CARD -->
+        <main id="student-card-view" class="hidden space-y-6">
+            <div class="no-print flex justify-between items-center bg-white p-4 rounded-2xl shadow-md border border-purple-100">
+                <button onclick="backToClassView()" class="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại Bảng Danh Sách Lớp
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="copyZaloMessage()" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 shadow-md transition-all">
+                        <i class="fa-solid fa-comment-dots"></i> Copy Nhận Xét Zalo
+                    </button>
+                    <button onclick="window.print()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 shadow-md transition-all">
+                        <i class="fa-solid fa-print"></i> In / Xuất PDF
+                    </button>
+                </div>
+            </div>
+
+            <div id="print-area" class="glass-card rounded-3xl p-6 sm:p-10 shadow-2xl border-4 border-purple-200 relative overflow-hidden bg-white">
+                <div class="absolute top-0 left-0 right-0 h-4 bg-gradient-to-r from-purple-600 via-pink-500 to-amber-400"></div>
+
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b-2 border-purple-100">
+                    <div class="flex items-center gap-5">
+                        <div class="relative">
+                            <div id="card-avatar" class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-pink-100 border-4 border-pink-300 flex items-center justify-center text-4xl shadow-lg">
+                                👧
+                            </div>
+                            <span id="card-badge-sticker" class="absolute -bottom-2 -right-2 bg-yellow-400 text-xs px-2 py-1 rounded-full font-black shadow border border-white">🌟 TOP</span>
+                        </div>
+                        <div>
+                            <span id="card-class-name" class="text-xs font-black uppercase tracking-wider text-pink-600 bg-pink-100 px-3 py-1 rounded-full">LỚP FLYERS 7</span>
+                            <h2 id="card-student-name" class="text-2xl sm:text-4xl font-black text-purple-950 mt-1">Vũ Minh Thư</h2>
+                            <p class="text-slate-500 font-bold text-xs sm:text-sm mt-0.5">
+                                Phụ huynh: <span id="card-parent-name" class="text-purple-700">Chị Yến Nhi</span> • <span id="card-lesson-date">Buổi học</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="w-full md:w-auto bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-2xl border-2 border-amber-200 flex items-center gap-4">
+                        <div id="sticker-icon" class="text-4xl">🌟</div>
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-amber-600 tracking-wider">DANH HIỆU BUỔI HỌC</span>
+                            <h4 id="sticker-title" class="font-black text-amber-900 text-base">SUPER STAR</h4>
+                            <p id="sticker-desc" class="text-xs text-amber-700 font-medium">Hăng hái phát biểu & bài làm xuất sắc!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 my-8">
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-black text-purple-900 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-pink-500"></i> ĐÁNH GIÁ KỸ NĂNG & THÁI ĐỘ
+                        </h3>
+
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1">
+                                    <span class="text-slate-700">1. Từ vựng & Ngữ Pháp (Vocabulary & Grammar)</span>
+                                    <span id="stars-vocab-text" class="text-amber-500">5/5 ⭐</span>
+                                </div>
+                                <div id="stars-vocab" class="text-amber-400 text-sm tracking-widest">★★★★★</div>
+                            </div>
+                            <hr class="border-slate-200/60">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1">
+                                    <span class="text-slate-700">2. Phát âm & Giao tiếp (Speaking & Phonics)</span>
+                                    <span id="stars-speaking-text" class="text-amber-500">5/5 ⭐</span>
+                                </div>
+                                <div id="stars-speaking" class="text-amber-400 text-sm tracking-widest">★★★★★</div>
+                            </div>
+                            <hr class="border-slate-200/60">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1">
+                                    <span class="text-slate-700">3. Thái độ & Tương tác lớp (Participation)</span>
+                                    <span id="stars-attitude-text" class="text-amber-500">5/5 ⭐</span>
+                                </div>
+                                <div id="stars-attitude" class="text-amber-400 text-sm tracking-widest">★★★★★</div>
+                            </div>
+                            <hr class="border-slate-200/60">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1">
+                                    <span class="text-slate-700">4. Hoàn thành bài tập về nhà (Homework)</span>
+                                    <span id="stars-hw-text" class="text-amber-500">5/5 ⭐</span>
+                                </div>
+                                <div id="stars-hw" class="text-amber-400 text-sm tracking-widest">★★★★★</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-black text-purple-900 flex items-center gap-2 mb-3">
+                                <i class="fa-solid fa-comment-medical text-purple-600"></i> LỜI NHẬN XÉT TỪ MS LINDA
+                            </h3>
+                            <div class="bg-purple-50/80 p-5 rounded-2xl border-2 border-purple-200 relative">
+                                <i class="fa-solid fa-quote-left text-3xl text-purple-200 absolute top-2 right-3 pointer-events-none"></i>
+                                <p id="card-teacher-comment" class="text-slate-700 font-semibold text-sm leading-relaxed italic relative z-10">
+                                    "Con rất ngoan..."
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="bg-pink-50 p-4 rounded-2xl border-2 border-pink-200 mt-4">
+                            <h4 class="font-black text-xs text-pink-700 uppercase tracking-wider flex items-center gap-2 mb-2">
+                                <i class="fa-solid fa-book-open"></i> DẶN DÒ BÀI TẬP VỀ NHÀ (HOMEWORK)
+                            </h4>
+                            <p id="card-homework-assign" class="text-xs font-bold text-slate-700">
+                                - Hoàn thành bài tập trong Workbook.<br>
+                                - Quay clip phát âm gửi nhóm Zalo lớp.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-400 font-bold gap-2">
+                    <div class="flex items-center gap-2 text-purple-900">
+                        <i class="fa-solid fa-heart text-pink-500"></i> Cảm ơn Phụ huynh đã luôn đồng hành cùng Lighthouse English!
+                    </div>
+                    <div>
+                        Lighthouse English Academy • Hotlines: 0988.xxx.xxx
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="mt-12 text-center text-xs font-bold text-slate-400 py-4 border-t border-purple-100 no-print">
+            <p>© 2026 LIGHTHOUSE ENGLISH ACADEMY BY MS LINDA. ALL RIGHTS RESERVED.</p>
+        </footer>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // DEFAULT DATABASE STRUCTURE FOR 6 CLASSES
+        const defaultDatabase = {
+            flyers7: {
+                className: "Lớp Flyers 7",
+                schedule: "19:30 Thứ Ba – Thứ Sáu",
+                lessons: [
+                    { id: "buoi1", name: "Nhận xét ngày 06.11.2026 (Unit 4 - Lesson 1)" },
+                    { id: "buoi2", name: "Nhận xét ngày 10.11.2026 (Unit 4 - Lesson 2)" }
+                ],
+                students: [
+                    { id: 1, name: "Vũ Minh Thư", parent: "Chị Yến Nhi", absent: 0, attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, hăng hái phát biểu", hw: "Đã làm đầy đủ", scoreVocab: 5, scoreSpeaking: 5, scoreAttitude: 5, scoreHW: 5, sticker: "Super Star 🌟", comment: "Con nghiêm túc, tiếp thu bài nhanh và hăng hái giơ tay phát biểu.", avatar: "👧" },
+                    { id: 2, name: "Kim Ngân", parent: "Chị Nhung Do", absent: 0, attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, hăng hái phát biểu", hw: "Đã làm đầy đủ", scoreVocab: 5, scoreSpeaking: 4, scoreAttitude: 5, scoreHW: 5, sticker: "Active Speaker 🎤", comment: "Ngân phát âm rất tự nhiên, con chủ động giao tiếp tiếng Anh với cô.", avatar: "👩" },
+                    { id: 3, name: "Đức Quang", parent: "Chị Linda Tran", absent: 1, attitude: "CẦN TẬP TRUNG", spirit: "Con có cố gắng, cần tự tin hơn", hw: "Bài làm khá tốt", scoreVocab: 4, scoreSpeaking: 4, scoreAttitude: 3, scoreHW: 4, sticker: "Good Try 👍", comment: "Quang cần chú ý tập trung hơn ở nửa sau buổi học. Con phản xạ từ vựng tốt.", avatar: "👦" },
+                    { id: 4, name: "Phương Anh", parent: "Chị Hoàng Vân", absent: 0, attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, học bài tích cực", hw: "Đã làm đầy đủ", scoreVocab: 5, scoreSpeaking: 5, scoreAttitude: 5, scoreHW: 5, sticker: "Homework Hero 📝", comment: "Phương Anh làm bài tập về nhà rất cẩn thận, trình bày đẹp mắt.", avatar: "👧" },
+                    { id: 5, name: "Minh Quang", parent: "Chị Đặng Cẩm Vân", absent: 0, attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, hăng hái phát biểu", hw: "Đã làm đầy đủ", scoreVocab: 4, scoreSpeaking: 5, scoreAttitude: 4, scoreHW: 5, sticker: "Super Star 🌟", comment: "Minh Quang thông minh, hoàn thành bài tập ngữ pháp rất nhanh.", avatar: "👦" }
+                ]
+            },
+            movers2: {
+                className: "Lớp Movers 2",
+                schedule: "18:00 Thứ Hai – Thứ Năm",
+                lessons: [
+                    { id: "buoi1", name: "Nhận xét ngày 05.11.2026 (Unit 3 - Animals)" }
+                ],
+                students: [
+                    { id: 1, name: "Bảo An", parent: "Chị Linh", absent: 0, attitude: "TẬP TRUNG", spirit: "Hăng hái phát biểu", hw: "Bài tập hoàn hảo", scoreVocab: 5, scoreSpeaking: 5, scoreAttitude: 5, scoreHW: 5, sticker: "Super Star 🌟", comment: "Bảo An thuộc toàn bộ từ vựng chủ đề Animals rất giỏi!", avatar: "👧" },
+                    { id: 2, name: "Gia Huy", parent: "Anh Tuấn", absent: 0, attitude: "TẬP TRUNG", spirit: "Nhiệt tình tham gia game", hw: "Đã làm", scoreVocab: 4, scoreSpeaking: 4, scoreAttitude: 5, scoreHW: 4, sticker: "Active Speaker 🎤", comment: "Huy phản xạ nói nhanh, chú ý hơn phần nối từ.", avatar: "👦" }
+                ]
+            },
+            starters1: {
+                className: "Lớp Starters 1",
+                schedule: "17:30 Thứ Bảy – Chủ Nhật",
+                lessons: [
+                    { id: "buoi1", name: "Nhận xét ngày 01.11.2026 (Unit 2 - Colors & Shapes)" }
+                ],
+                students: [
+                    { id: 1, name: "Nhã Phương", parent: "Chị Mai", absent: 0, attitude: "NGOAN NGOÁN", spirit: "Hát và tương tác tốt", hw: "Đã nộp video", scoreVocab: 5, scoreSpeaking: 5, scoreAttitude: 5, scoreHW: 5, sticker: "Super Star 🌟", comment: "Bé Nhã Phương phát âm âm /s/ và /k/ rất chuẩn xác.", avatar: "👧" }
+                ]
+            },
+            gs3: {
+                className: "Global Success 3",
+                schedule: "19:30 Thứ Tư – Thứ Bảy",
+                lessons: [
+                    { id: "buoi1", name: "Nhận xét Unit 5: Our Hobbies" }
+                ],
+                students: [
+                    { id: 1, name: "Hoàng Bách", parent: "Chị Hà", absent: 0, attitude: "TẬP TRUNG", spirit: "Hăng hái xây dựng bài", hw: "Đã làm đủ", scoreVocab: 5, scoreSpeaking: 4, scoreAttitude: 5, scoreHW: 5, sticker: "Homework Hero 📝", comment: "Bách viết câu theo cấu trúc 'I like...' rất chuẩn.", avatar: "👦" }
+                ]
+            },
+            gs4: {
+                className: "Global Success 4",
+                schedule: "18:00 Thứ Ba – Thứ Sáu",
+                lessons: [
+                    { id: "buoi1", name: "Nhận xét Unit 6: Our School Facilities" }
+                ],
+                students: [
+                    { id: 1, name: "Khánh Chi", parent: "Chị Lan", absent: 0, attitude: "TẬP TRUNG", spirit: "Nhiệt tình", hw: "Tốt", scoreVocab: 5, scoreSpeaking: 5, scoreAttitude: 5, scoreHW: 5, sticker: "Super Star 🌟", comment: "Chi tự tin thuyết trình ngắn về trường học của mình.", avatar: "👧" }
+                ]
+            },
+            phonics: {
+                className: "Jolly Phonics",
+                schedule: "17:00 Thứ Hai – Thứ Tư",
+                lessons: [
+                    { id: "buoi1", name: "Nhận xét Group 1 Sounds: s, a, t, i, p, n" }
+                ],
+                students: [
+                    { id: 1, name: "Minh Trí", parent: "Chị Hương", absent: 0, attitude: "VUI VẺ", spirit: "Học âm qua bài hát tốt", hw: "Hoàn thành quay clip", scoreVocab: 5, scoreSpeaking: 5, scoreAttitude: 5, scoreHW: 5, sticker: "Super Star 🌟", comment: "Bé bật âm Phonics rất rõ, nhớ được cả 6 động tác ghép âm!", avatar: "👦" }
+                ]
+            }
+        };
+
+        // LOAD DATABASE FROM LOCALSTORAGE OR DEFAULT
+        let database = JSON.parse(localStorage.getItem('lighthouse_english_db_v2')) || defaultDatabase;
+
+        let currentClassKey = "flyers7";
+        let currentLessonId = "";
+        let currentStudentId = null;
+        let isTeacherMode = false;
+
+        function saveDatabase() {
+            localStorage.setItem('lighthouse_english_db_v2', JSON.stringify(database));
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const classParam = urlParams.get('class');
+            const studentParam = urlParams.get('student');
+            const modeParam = urlParams.get('mode');
+
+            if (classParam && database[classParam]) {
+                currentClassKey = classParam;
+            }
+
+            if (modeParam === 'teacher') {
+                toggleTeacherMode();
+            }
+
+            document.getElementById('class-select').value = currentClassKey;
+            loadLessonsForClass(currentClassKey);
+
+            if (studentParam) {
+                currentStudentId = parseInt(studentParam);
+                showStudentCard(currentStudentId);
+            } else {
+                renderClassDashboard();
+            }
+        };
+
+        function loadLessonsForClass(classKey) {
+            const classData = database[classKey];
+            const lessonSelect = document.getElementById('lesson-select');
+            lessonSelect.innerHTML = '';
+
+            classData.lessons.forEach((lesson) => {
+                const opt = document.createElement('option');
+                opt.value = lesson.id;
+                opt.textContent = lesson.name;
+                lessonSelect.appendChild(opt);
+            });
+
+            currentLessonId = classData.lessons[0].id;
+        }
+
+        function changeClass(classKey) {
+            currentClassKey = classKey;
+            loadLessonsForClass(classKey);
+            updateURLParameter('class', classKey);
+            updateURLParameter('student', null);
+            currentStudentId = null;
+            renderClassDashboard();
+        }
+
+        function changeLesson(lessonId) {
+            currentLessonId = lessonId;
+            renderClassDashboard();
+        }
+
+        // TOGGLE TEACHER MODE
+        function toggleTeacherMode() {
+            isTeacherMode = !isTeacherMode;
+            const btnText = document.getElementById('teacher-mode-text');
+            const btnIcon = document.getElementById('teacher-mode-icon');
+            const toolbar = document.getElementById('teacher-toolbar');
+            const btn = document.getElementById('teacher-mode-btn');
+
+            if (isTeacherMode) {
+                btnText.innerText = "Đang Sửa (Khóa)";
+                btnIcon.className = "fa-solid fa-unlock text-rose-700";
+                btn.className = "w-full sm:w-auto px-4 py-2.5 bg-rose-400 hover:bg-rose-500 text-white font-black text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 uppercase tracking-wide";
+                toolbar.classList.remove('hidden');
+                showToast("Đã bật Chế độ Giáo viên Chỉnh sửa!");
+            } else {
+                btnText.innerText = "Chế độ Sửa";
+                btnIcon.className = "fa-solid fa-lock";
+                btn.className = "w-full sm:w-auto px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-black text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 uppercase tracking-wide";
+                toolbar.classList.add('hidden');
+                showToast("Đã khóa Chế độ Sửa an toàn!");
+            }
+            renderClassDashboard();
+        }
+
+        // RENDER CLASS DASHBOARD
+        function renderClassDashboard() {
+            document.getElementById('class-dashboard').classList.remove('hidden');
+            document.getElementById('student-card-view').classList.add('hidden');
+            document.getElementById('controls-panel').classList.remove('hidden');
+
+            const classData = database[currentClassKey];
+            document.getElementById('header-title').innerText = "BẢNG NHẬN XẾT HỌC TẬP";
+            document.getElementById('header-date').innerText = "Lịch học: " + classData.schedule;
+            document.getElementById('class-badge').innerText = classData.className.toUpperCase();
+            
+            const currentLessonObj = classData.lessons.find(l => l.id === currentLessonId) || classData.lessons[0];
+            document.getElementById('lesson-title-display').innerText = currentLessonObj.name;
+
+            const tbody = document.getElementById('student-table-body');
+            tbody.innerHTML = '';
+
+            let presentCount = 0;
+            let goodHwCount = 0;
+            let topStudent = classData.students[0]?.name || "--";
+
+            classData.students.forEach((std, idx) => {
+                if (std.absent === 0) presentCount++;
+                if (std.scoreHW >= 4) goodHwCount++;
+
+                const row = document.createElement('tr');
+                const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-pink-50/40';
+                row.className = `${rowBg} hover:bg-purple-100/50 transition-colors border-b border-purple-100/60`;
+
+                const baseUrl = window.location.origin + window.location.pathname;
+                const studentShareUrl = `${baseUrl}?class=${currentClassKey}&student=${std.id}`;
+
+                let actionButtons = `
+                    <button onclick="openStudentView(${std.id})" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-address-card"></i> Báo Cáo
+                    </button>
+                    <button onclick="copyToClipboard('${studentShareUrl}', 'Đã copy link gửi riêng cho PH bé ${std.name}!')" class="px-2.5 py-1.5 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-xs font-bold shadow transition-all" title="Copy Link Zalo">
+                        <i class="fa-solid fa-link"></i>
+                    </button>
+                `;
+
+                if (isTeacherMode) {
+                    actionButtons += `
+                        <button onclick="openEditStudentModal(${std.id})" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow transition-all" title="Sửa học sinh này">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteStudent(${std.id})" class="px-2.5 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold shadow transition-all" title="Xóa học sinh">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    `;
+                }
+
+                row.innerHTML = `
+                    <td class="p-4 text-center font-bold text-purple-900">${idx + 1}</td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${std.avatar}</span>
+                            <div>
+                                <div class="font-extrabold text-slate-900">${std.name}</div>
+                                <span class="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold">${std.sticker}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4 text-slate-600 font-semibold">${std.parent}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-black ${std.absent === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                            ${std.absent === 0 ? '0' : '01 (Có phép)'}
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-3 py-1 rounded-lg text-xs font-black bg-purple-100 text-purple-800 uppercase">
+                            ${std.attitude}
+                        </span>
+                    </td>
+                    <td class="p-4 text-slate-700 font-medium">${std.spirit}</td>
+                    <td class="p-4">
+                        <span class="px-3 py-1 rounded-lg text-xs font-bold bg-pink-100 text-pink-700">
+                            ${std.hw}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center no-print">
+                        <div class="flex justify-center items-center gap-1.5">
+                            ${actionButtons}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('stat-total').innerText = classData.students.length;
+            document.getElementById('stat-present').innerText = presentCount;
+            document.getElementById('stat-good-hw').innerText = goodHwCount;
+            document.getElementById('stat-top-student').innerText = topStudent;
+        }
+
+        // ADD NEW STUDENT
+        function addNewStudent() {
+            const classData = database[currentClassKey];
+            const newId = classData.students.length > 0 ? Math.max(...classData.students.map(s => s.id)) + 1 : 1;
+            const newStudent = {
+                id: newId,
+                name: "Học sinh mới " + newId,
+                parent: "Phụ huynh",
+                absent: 0,
+                attitude: "TẬP TRUNG",
+                spirit: "Nghiêm túc phát biểu",
+                hw: "Đã làm đủ",
+                scoreVocab: 5,
+                scoreSpeaking: 5,
+                scoreAttitude: 5,
+                scoreHW: 5,
+                sticker: "Super Star 🌟",
+                comment: "Con chăm chỉ và hoàn thành bài tập rất tốt.",
+                avatar: "👧"
+            };
+            classData.students.push(newStudent);
+            saveDatabase();
+            renderClassDashboard();
+            openEditStudentModal(newId);
+            showToast("Đã thêm học sinh mới!");
+        }
+
+        // DELETE STUDENT
+        function deleteStudent(studentId) {
+            const classData = database[currentClassKey];
+            classData.students = classData.students.filter(s => s.id !== studentId);
+            saveDatabase();
+            renderClassDashboard();
+            showToast("Đã xóa học sinh!");
+        }
+
+        // OPEN EDIT STUDENT MODAL
+        function openEditStudentModal(studentId) {
+            const classData = database[currentClassKey];
+            const std = classData.students.find(s => s.id === studentId);
+            if (!std) return;
+
+            document.getElementById('edit-std-id').value = std.id;
+            document.getElementById('edit-std-name').value = std.name;
+            document.getElementById('edit-std-parent').value = std.parent;
+            document.getElementById('edit-std-absent').value = std.absent;
+            document.getElementById('edit-std-attitude').value = std.attitude;
+            document.getElementById('edit-std-spirit').value = std.spirit;
+            document.getElementById('edit-std-hw').value = std.hw;
+            document.getElementById('edit-std-sticker').value = std.sticker;
+            document.getElementById('edit-vocab').value = std.scoreVocab;
+            document.getElementById('edit-speaking').value = std.scoreSpeaking;
+            document.getElementById('edit-attitude-score').value = std.scoreAttitude;
+            document.getElementById('edit-hw-score').value = std.scoreHW;
+            document.getElementById('edit-std-comment').value = std.comment;
+            document.getElementById('edit-std-avatar').value = std.avatar;
+
+            document.getElementById('student-modal').classList.remove('hidden');
+        }
+
+        function closeStudentModal() {
+            document.getElementById('student-modal').classList.add('hidden');
+        }
+
+        function saveStudentModal() {
+            const id = parseInt(document.getElementById('edit-std-id').value);
+            const classData = database[currentClassKey];
+            const std = classData.students.find(s => s.id === id);
+            if (!std) return;
+
+            std.name = document.getElementById('edit-std-name').value;
+            std.parent = document.getElementById('edit-std-parent').value;
+            std.absent = parseInt(document.getElementById('edit-std-absent').value);
+            std.attitude = document.getElementById('edit-std-attitude').value;
+            std.spirit = document.getElementById('edit-std-spirit').value;
+            std.hw = document.getElementById('edit-std-hw').value;
+            std.sticker = document.getElementById('edit-std-sticker').value;
+            std.scoreVocab = parseInt(document.getElementById('edit-vocab').value) || 5;
+            std.scoreSpeaking = parseInt(document.getElementById('edit-speaking').value) || 5;
+            std.scoreAttitude = parseInt(document.getElementById('edit-attitude-score').value) || 5;
+            std.scoreHW = parseInt(document.getElementById('edit-hw-score').value) || 5;
+            std.comment = document.getElementById('edit-std-comment').value;
+            std.avatar = document.getElementById('edit-std-avatar').value;
+
+            saveDatabase();
+            closeStudentModal();
+            renderClassDashboard();
+            showToast("Đã lưu thông tin học sinh thành công!");
+        }
+
+        // CLASS SETTINGS (EDIT CLASS NAME & SCHEDULE)
+        function openClassSettings() {
+            const classData = database[currentClassKey];
+            const newName = prompt("Nhập tên hiển thị cho lớp:", classData.className);
+            if (newName === null) return;
+            const newSched = prompt("Nhập lịch học (ví dụ: 19:30 Thứ Ba – Thứ Sáu):", classData.schedule);
+            if (newSched === null) return;
+
+            classData.className = newName;
+            classData.schedule = newSched;
+            saveDatabase();
+            renderClassDashboard();
+            showToast("Đã cập nhật thông tin lớp học!");
+        }
+
+        // OPEN INDIVIDUAL STUDENT CARD
+        function openStudentView(studentId) {
+            updateURLParameter('student', studentId);
+            showStudentCard(studentId);
+            confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+        }
+
+        function showStudentCard(studentId) {
+            currentStudentId = studentId;
+            const classData = database[currentClassKey];
+            const std = classData.students.find(s => s.id === studentId);
+
+            if (!std) {
+                renderClassDashboard();
+                return;
+            }
+
+            document.getElementById('class-dashboard').classList.add('hidden');
+            document.getElementById('student-card-view').classList.remove('hidden');
+
+            document.getElementById('card-class-name').innerText = classData.className.toUpperCase();
+            document.getElementById('card-student-name').innerText = std.name;
+            document.getElementById('card-parent-name').innerText = std.parent;
+            document.getElementById('card-avatar').innerText = std.avatar;
+            document.getElementById('card-teacher-comment').innerText = `"${std.comment}"`;
+            
+            document.getElementById('sticker-title').innerText = std.sticker.toUpperCase();
+            document.getElementById('card-badge-sticker').innerText = std.sticker;
+
+            const renderStars = (score) => {
+                let stars = '';
+                for(let i=1; i<=5; i++) { stars += i <= score ? '★' : '☆'; }
+                return stars;
+            };
+
+            document.getElementById('stars-vocab').innerText = renderStars(std.scoreVocab);
+            document.getElementById('stars-vocab-text').innerText = `${std.scoreVocab}/5 ⭐`;
+            document.getElementById('stars-speaking').innerText = renderStars(std.scoreSpeaking);
+            document.getElementById('stars-speaking-text').innerText = `${std.scoreSpeaking}/5 ⭐`;
+            document.getElementById('stars-attitude').innerText = renderStars(std.scoreAttitude);
+            document.getElementById('stars-attitude-text').innerText = `${std.scoreAttitude}/5 ⭐`;
+            document.getElementById('stars-hw').innerText = renderStars(std.scoreHW);
+            document.getElementById('stars-hw-text').innerText = `${std.scoreHW}/5 ⭐`;
+        }
+
+        function backToClassView() {
+            updateURLParameter('student', null);
+            renderClassDashboard();
+        }
+
+        // COPY ZALO MESSAGE
+        function copyZaloMessage() {
+            const classData = database[currentClassKey];
+            const std = classData.students.find(s => s.id === currentStudentId);
+            if (!std) return;
+
+            const text = `🌟 [LIGHTHOUSE ENGLISH ACADEMY] - BÁO CÁO HỌC TẬP
+----------------------------------
+Dear Phụ huynh bé ${std.name} (${std.parent}),
+Ms Linda xin gửi nhận xét học tập của con tại lớp ${classData.className}:
+
+- Thái độ học tập: ${std.attitude} (${std.spirit})
+- Bài tập về nhà: ${std.hw}
+- Danh hiệu buổi học: ${std.sticker}
+
+💬 Nhận xét chi tiết từ Ms Linda:
+"${std.comment}"
+
+👉 Xem báo cáo trực tuyến chi tiết của bé tại:
+${window.location.href}
+
+Cảm ơn Phụ huynh đã luôn đồng hành cùng trung tâm! ❤️`;
+
+            copyToClipboard(text, "Đã sao chép tin nhắn Zalo sẵn sàng gửi cho PH!");
+        }
+
+        // EXPORT / BACKUP JSON
+        function openExportModal() {
+            document.getElementById('export-json-area').value = JSON.stringify(database, null, 2);
+            document.getElementById('export-modal').classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').classList.add('hidden');
+        }
+
+        function copyExportJson() {
+            const area = document.getElementById('export-json-area');
+            area.select();
+            document.execCommand('copy');
+            showToast("Đã copy dữ liệu JSON thành công!");
+        }
+
+        function resetToDefaultData() {
+            if (confirm("Bạn có chắc muốn khôi phục dữ liệu về mặc định ban đầu không? Mọi chỉnh sửa của bạn sẽ bị mất.")) {
+                localStorage.removeItem('lighthouse_english_db_v2');
+                database = JSON.parse(JSON.stringify(defaultDatabase));
+                renderClassDashboard();
+                closeExportModal();
+                showToast("Đã khôi phục dữ liệu mặc định thành công!");
+            }
+        }
+
+        function copyToClipboard(text, successMessage) {
+            const tempInput = document.createElement("textarea");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            showToast(successMessage);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function updateURLParameter(key, value) {
+            const url = new URL(window.location.href);
+            if (value) {
+                url.searchParams.set(key, value);
+            } else {
+                url.searchParams.delete(key);
+            }
+            window.history.pushState({}, '', url.toString());
+        }
+    </script>
+</body>
+</html>
