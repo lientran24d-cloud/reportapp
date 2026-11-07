@@ -71,17 +71,25 @@
                         </button>
                     </div>
 
-                    <!-- Filter Controls -->
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <div class="bg-white/10 backdrop-blur-md p-1.5 rounded-xl flex items-center gap-2 w-full sm:w-auto">
-                            <select id="classSelect" onchange="changeClass(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 shadow-sm border-0">
+                    <!-- Filter Controls with Labels -->
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto bg-white/10 backdrop-blur-md p-2 rounded-2xl">
+                        <!-- Chọn Lớp -->
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <label class="text-xs font-bold text-sky-100 uppercase whitespace-nowrap"><i class="fas fa-school"></i> Lớp:</label>
+                            <select id="classSelect" onchange="changeClass(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 shadow-sm border-0 w-full sm:w-auto">
                                 <!-- Dynamic Options -->
                             </select>
-                            <select id="unitSelect" onchange="changeUnit(this.value)" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 shadow-sm border-0">
-                                <option value="Buổi 6.11.2026">Buổi 6.11.2026</option>
-                                <option value="Unit 1: Back to School">Unit 1: Back to School</option>
-                                <option value="Unit 2: Family & Friends">Unit 2: Family & Friends</option>
+                        </div>
+
+                        <!-- Chọn Buổi Học / Unit (Đã có thể thêm mới) -->
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <label class="text-xs font-bold text-sky-100 uppercase whitespace-nowrap"><i class="fas fa-calendar-alt"></i> Buổi:</label>
+                            <select id="unitSelect" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 shadow-sm border-0 w-full sm:w-auto">
+                                <!-- Dynamic Units -->
                             </select>
+                            <button onclick="addNewUnit()" title="Thêm buổi học mới" class="bg-sky-500 hover:bg-sky-600 text-white p-1.5 rounded-lg text-xs font-bold shadow">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -103,7 +111,7 @@
                 <button onclick="addNewClass()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
                     <i class="fas fa-plus-circle"></i> Thêm Lớp Mới
                 </button>
-                <button onclick="addNewStudent()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                <button onclick="openAddStudentModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
                     <i class="fas fa-user-plus"></i> Thêm Học Sinh
                 </button>
                 <button onclick="exportJSONData()" class="bg-violet-600 hover:bg-violet-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
@@ -123,7 +131,7 @@
         <div class="bg-sky-50 border border-sky-200 text-sky-800 px-4 py-3 rounded-2xl mb-6 text-sm flex items-center justify-between no-print">
             <div class="flex items-center gap-2">
                 <i class="fas fa-info-circle text-sky-600 text-base"></i>
-                <span>Gửi bảng nhận xét: Chọn <strong>"Link"</strong> hoặc <strong>"Xem"</strong> để xem thẻ cá nhân và copy tin nhắn Zalo gửi phụ huynh.</span>
+                <span>Gửi bảng nhận xét: Chọn buổi học ở menu trên, sau đó bấm <strong>"Xem"</strong> để copy tin nhắn Zalo gửi phụ huynh.</span>
             </div>
         </div>
 
@@ -174,7 +182,7 @@
                 <!-- Stars Breakdown -->
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <h4 class="text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Đánh Giá Kỹ Năng Buổi Học</h4>
-                    <div class="grid grid-cols-2 gap-3 text-xs" id="modalSkills">
+                    <div class="grid grid-cols-1 gap-2.5 text-xs" id="modalSkills">
                         <!-- Dynamic Skills -->
                     </div>
                 </div>
@@ -200,51 +208,132 @@
         </div>
     </div>
 
+    <!-- MODAL FORM CHỈNH SỬA / THÊM HỌC SINH -->
+    <div id="studentFormModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl p-6 border border-sky-100">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 id="formModalTitle" class="text-lg font-bold text-slate-800">Thêm / Sửa Thông Tin Học Sinh</h3>
+                <button onclick="closeStudentFormModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="studentEditForm" onsubmit="handleStudentFormSubmit(event)" class="space-y-4 text-sm">
+                <input type="hidden" id="editStudentId">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Họ và tên học sinh:</label>
+                    <input type="text" id="inputName" required class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Tên Phụ Huynh / Liên hệ:</label>
+                        <input type="text" id="inputParent" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Số buổi vắng (0, 01...):</label>
+                        <input type="text" id="inputAbsent" value="0" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Thái độ học tập:</label>
+                        <select id="inputAttitude" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-400 focus:outline-none font-semibold">
+                            <option value="TẬP TRUNG">TẬP TRUNG</option>
+                            <option value="CẦN TẬP TRUNG">CẦN TẬP TRUNG</option>
+                            <option value="NGOAN NHOÃN">NGOAN NHOÃN</option>
+                            <option value="HĂNG HÁI">HĂNG HÁI</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Bài tập về nhà:</label>
+                        <input type="text" id="inputHw" value="Đã hoàn thành" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Lời nhận xét chi tiết (Tinh thần học):</label>
+                    <textarea id="inputSpirit" rows="2" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-400 focus:outline-none"></textarea>
+                </div>
+
+                <!-- Đánh giá số sao kỹ năng -->
+                <div class="bg-slate-50 p-3 rounded-2xl border space-y-2">
+                    <label class="block font-bold text-slate-700 text-xs uppercase">Điểm số kỹ năng (1 - 5 sao):</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="flex items-center justify-between bg-white p-2 rounded-lg border">
+                            <span>Từ Vựng & Ngữ Pháp</span>
+                            <select id="skillVocab" class="font-bold text-amber-500 bg-transparent focus:outline-none">
+                                <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                <option value="4">⭐⭐⭐⭐ (4)</option>
+                                <option value="3">⭐⭐⭐ (3)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between bg-white p-2 rounded-lg border">
+                            <span>Nghe & Phát Âm</span>
+                            <select id="skillListening" class="font-bold text-amber-500 bg-transparent focus:outline-none">
+                                <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                <option value="4">⭐⭐⭐⭐ (4)</option>
+                                <option value="3">⭐⭐⭐ (3)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between bg-white p-2 rounded-lg border">
+                            <span>Thái Độ Tương Tác</span>
+                            <select id="skillAttitude" class="font-bold text-amber-500 bg-transparent focus:outline-none">
+                                <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                <option value="4">⭐⭐⭐⭐ (4)</option>
+                                <option value="3">⭐⭐⭐ (3)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between bg-white p-2 rounded-lg border">
+                            <span>Hoàn Thành Bài Tập</span>
+                            <select id="skillHomework" class="font-bold text-emerald-600 bg-transparent focus:outline-none">
+                                <option value="Xuất sắc">Xuất sắc</option>
+                                <option value="Đạt">Đạt</option>
+                                <option value="Cần cố gắng">Cần cố gắng</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button type="button" onclick="closeStudentFormModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl">Hủy</button>
+                    <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow">Lưu Lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- SCRIPT CHÍNH XỬ LÝ LOGIC & DỮ LIỆU -->
     <script>
-        // Dữ liệu mẫu 6 lớp
+        // Dữ liệu mẫu 6 lớp (đã có thêm mảng units cho từng lớp)
         const defaultData = {
             "flyers7": {
                 name: "LỚP FLYERS 7",
                 schedule: "19:30 Thứ Ba – Thứ Sáu",
+                units: ["Buổi học ngày 6.11.2026", "Unit 1: Back to School", "Unit 2: Family & Friends"],
                 students: [
-                    { id: 1, name: "Vũ Minh Thư", parent: "Yến Nhi", absent: "0", attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, hăng hái phát biểu", hw: "Đã hoàn thành", stars: 5, sticker: "🌟 Super Star", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Thien" },
-                    { id: 2, name: "Kim Ngân", parent: "Nhungdo", absent: "0", attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, hăng hái phát biểu", hw: "Đã hoàn thành", stars: 5, sticker: "📚 Active Reader", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Ngan" },
-                    { id: 3, name: "Đức Quang", parent: "Lindatran", absent: "01", attitude: "TẬP TRUNG", spirit: "Con chú ý lắng nghe, làm bài tốt", hw: "Cần cố gắng thêm", stars: 4, sticker: "🎤 Active Speaker", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Quang" },
-                    { id: 4, name: "Phương Anh", parent: "Hoàng Vân", absent: "0", attitude: "TẬP TRUNG", spirit: "Con tích cực tham gia hoạt động", hw: "Đã hoàn thành", stars: 5, sticker: "🌟 Super Star", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Anh" },
-                    { id: 5, name: "Minh Quang", parent: "Đặng Cẩm Vân", absent: "0", attitude: "TẬP TRUNG", spirit: "Con phát âm chuẩn, tương tác tốt", hw: "Đã hoàn thành", stars: 5, sticker: "📝 Homework Hero", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Minh" }
+                    { id: 1, name: "Vũ Minh Thư", parent: "Yến Nhi", absent: "0", attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, hăng hái phát biểu", hw: "Đã hoàn thành", skills: { vocab: 5, listening: 5, attitude: 5, homework: "Xuất sắc" }, sticker: "🌟 Super Star", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Thien" },
+                    { id: 2, name: "Kim Ngân", parent: "Nhungdo", absent: "0", attitude: "TẬP TRUNG", spirit: "Con nghiêm túc, hăng hái phát biểu", hw: "Đã hoàn thành", skills: { vocab: 5, listening: 4, attitude: 5, homework: "Xuất sắc" }, sticker: "📚 Active Reader", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Ngan" },
+                    { id: 3, name: "Đức Quang", parent: "Lindatran", absent: "01", attitude: "TẬP TRUNG", spirit: "Con chú ý lắng nghe, làm bài tốt", hw: "Cần cố gắng thêm", skills: { vocab: 4, listening: 4, attitude: 4, homework: "Đạt" }, sticker: "🎤 Active Speaker", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Quang" },
+                    { id: 4, name: "Phương Anh", parent: "Hoàng Vân", absent: "0", attitude: "TẬP TRUNG", spirit: "Con tích cực tham gia hoạt động", hw: "Đã hoàn thành", skills: { vocab: 5, listening: 5, attitude: 5, homework: "Xuất sắc" }, sticker: "🌟 Super Star", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Anh" },
+                    { id: 5, name: "Minh Quang", parent: "Đặng Cẩm Vân", absent: "0", attitude: "TẬP TRUNG", spirit: "Con phát âm chuẩn, tương tác tốt", hw: "Đã hoàn thành", skills: { vocab: 5, listening: 5, attitude: 5, homework: "Xuất sắc" }, sticker: "📝 Homework Hero", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Minh" }
                 ]
             },
             "movers2": {
                 name: "LỚP MOVERS 2",
                 schedule: "17:30 Thứ Hai – Thứ Năm",
+                units: ["Buổi học ngày 6.11.2026", "Unit 1: Animals"],
                 students: [
-                    { id: 1, name: "Bảo An", parent: "Mẹ An", absent: "0", attitude: "TẬP TRUNG", spirit: "Học sôi nổi, phát âm hay", hw: "Đã hoàn thành", stars: 5, sticker: "🌟 Super Star", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=An" },
-                    { id: 2, name: "Gia Huy", parent: "Bố Huy", absent: "0", attitude: "CẦN TẬP TRUNG", spirit: "Cần chú ý hơn trong giờ", hw: "Chưa làm xong", stars: 3, sticker: "💪 Keep Trying", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Huy" }
+                    { id: 1, name: "Bảo An", parent: "Mẹ An", absent: "0", attitude: "TẬP TRUNG", spirit: "Học sôi nổi, phát âm hay", hw: "Đã hoàn thành", skills: { vocab: 5, listening: 5, attitude: 5, homework: "Xuất sắc" }, sticker: "🌟 Super Star", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=An" },
+                    { id: 2, name: "Gia Huy", parent: "Bố Huy", absent: "0", attitude: "CẦN TẬP TRUNG", spirit: "Cần chú ý hơn trong giờ", hw: "Chưa làm xong", skills: { vocab: 3, listening: 3, attitude: 3, homework: "Cần cố gắng" }, sticker: "💪 Keep Trying", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Huy" }
                 ]
             },
             "starters1": {
                 name: "LỚP STARTERS 1",
                 schedule: "18:00 Thứ Bảy – Chủ Nhật",
+                units: ["Buổi học ngày 6.11.2026", "Unit 1: Colors"],
                 students: [
-                    { id: 1, name: "Khánh Vy", parent: "Mẹ Vy", absent: "0", attitude: "NGOAN NHOÃN", spirit: "Mạnh dạn phát biểu", hw: "Đã hoàn thành", stars: 5, sticker: "💖 Cute Bee", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Vy" }
+                    { id: 1, name: "Khánh Vy", parent: "Mẹ Vy", absent: "0", attitude: "NGOAN NHOÃN", spirit: "Mạnh dạn phát biểu", hw: "Đã hoàn thành", skills: { vocab: 5, listening: 5, attitude: 5, homework: "Xuất sắc" }, sticker: "💖 Cute Bee", avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Vy" }
                 ]
             },
-            "gs3": {
-                name: "GLOBAL SUCCESS 3",
-                schedule: "19:00 Thứ Tư – Chủ Nhật",
-                students: []
-            },
-            "gs4": {
-                name: "GLOBAL SUCCESS 4",
-                schedule: "19:30 Thứ Hai – Thứ Sáu",
-                students: []
-            },
-            "jp": {
-                name: "JOLLY PHONICS",
-                schedule: "17:00 Thứ Bảy – Chủ Nhật",
-                students: []
-            }
+            "gs3": { name: "GLOBAL SUCCESS 3", schedule: "19:00 Thứ Tư – Chủ Nhật", units: ["Buổi học ngày 6.11.2026"], students: [] },
+            "gs4": { name: "GLOBAL SUCCESS 4", schedule: "19:30 Thứ Hai – Thứ Sáu", units: ["Buổi học ngày 6.11.2026"], students: [] },
+            "jp": { name: "JOLLY PHONICS", schedule: "17:00 Thứ Bảy – Chủ Nhật", units: ["Buổi học ngày 6.11.2026"], students: [] }
         };
 
         // State Management
@@ -264,6 +353,7 @@
             }
 
             renderClassSelectOptions();
+            renderUnitSelectOptions();
             renderApp();
 
             if (studentParam) {
@@ -289,6 +379,36 @@
             });
         }
 
+        // Render Dropdown Buổi học / Unit của lớp hiện tại
+        function renderUnitSelectOptions() {
+            const select = document.getElementById('unitSelect');
+            select.innerHTML = '';
+            const currentClass = appData[currentClassKey];
+            if (!currentClass.units) currentClass.units = ["Buổi học ngày 6.11.2026"];
+
+            currentClass.units.forEach(unit => {
+                const opt = document.createElement('option');
+                opt.value = unit;
+                opt.textContent = unit;
+                select.appendChild(opt);
+            });
+        }
+
+        // Thêm Buổi / Unit mới cho lớp hiện tại
+        function addNewUnit() {
+            const newUnitName = prompt("Nhập tên Buổi học hoặc Unit mới (Ví dụ: Buổi học ngày 10.11.2026 hoặc Unit 3):");
+            if (!newUnitName) return;
+
+            const currentClass = appData[currentClassKey];
+            if (!currentClass.units) currentClass.units = [];
+            
+            currentClass.units.push(newUnitName);
+            saveData();
+            renderUnitSelectOptions();
+            document.getElementById('unitSelect').value = newUnitName;
+            alert(`Đã thêm thành công buổi: "${newUnitName}"!`);
+        }
+
         function renderApp() {
             const currentClass = appData[currentClassKey];
             if (!currentClass) return;
@@ -296,6 +416,7 @@
             document.getElementById('displayClassName').textContent = currentClass.name;
             document.getElementById('displaySchedule').innerHTML = `<i class="far fa-clock"></i> Lịch học: ${currentClass.schedule}`;
             document.getElementById('classSelect').value = currentClassKey;
+            renderUnitSelectOptions();
 
             const tbody = document.getElementById('studentTableBody');
             tbody.innerHTML = '';
@@ -333,8 +454,8 @@
                                 <i class="fas fa-link"></i> Link
                             </button>
                             ${isEditMode ? `
-                                <button onclick="editStudent(${st.id})" class="bg-amber-500 text-white text-xs p-1.5 rounded-lg"><i class="fas fa-pen"></i></button>
-                                <button onclick="deleteStudent(${st.id})" class="bg-rose-500 text-white text-xs p-1.5 rounded-lg"><i class="fas fa-trash"></i></button>
+                                <button onclick="openEditStudentModal(${st.id})" class="bg-amber-500 text-white text-xs p-1.5 rounded-lg" title="Sửa"><i class="fas fa-pen"></i></button>
+                                <button onclick="deleteStudent(${st.id})" class="bg-rose-500 text-white text-xs p-1.5 rounded-lg" title="Xóa"><i class="fas fa-trash"></i></button>
                             ` : ''}
                         </div>
                     </td>
@@ -367,7 +488,7 @@
             renderApp();
         }
 
-        // Sửa Tên Lớp & Lịch Học -> Tự động cập nhật menu dropdown phía trên
+        // Sửa Tên Lớp & Lịch Học -> Đồng bộ Menu Dropdown
         function editClassDetails() {
             const current = appData[currentClassKey];
             const newName = prompt("Nhập tên lớp mới:", current.name);
@@ -379,7 +500,7 @@
             appData[currentClassKey].schedule = newSchedule || current.schedule;
             
             saveData();
-            renderClassSelectOptions(); // Cập nhật đồng bộ Dropdown
+            renderClassSelectOptions();
             renderApp();
         }
 
@@ -397,54 +518,109 @@
             appData[classKey] = {
                 name: className || "LỚP MỚI",
                 schedule: schedule || "Chưa xếp lịch",
+                units: ["Buổi học ngày 6.11.2026"],
                 students: []
             };
 
             currentClassKey = classKey;
             saveData();
-            renderClassSelectOptions(); // Cập nhật dropdown
+            renderClassSelectOptions();
             renderApp();
         }
 
-        // Thêm Học Sinh
-        function addNewStudent() {
-            const name = prompt("Tên học sinh:");
-            if (!name) return;
-            const parent = prompt("Tên Phụ huynh (Zalo/ĐT):", "Phụ huynh");
-            
-            const newSt = {
-                id: Date.now(),
-                name: name,
-                parent: parent || "Phụ huynh",
-                absent: "0",
-                attitude: "TẬP TRUNG",
-                spirit: "Con học hành ngoan ngoãn, hăng hái",
-                hw: "Đã hoàn thành",
-                stars: 5,
-                sticker: "🌟 Super Star",
-                avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`
-            };
-
-            appData[currentClassKey].students.push(newSt);
-            saveData();
-            renderApp();
+        // Mở Modal Thêm Học Sinh
+        function openAddStudentModal() {
+            document.getElementById('formModalTitle').textContent = "Thêm Học Sinh Mới";
+            document.getElementById('editStudentId').value = "";
+            document.getElementById('inputName').value = "";
+            document.getElementById('inputParent').value = "";
+            document.getElementById('inputAbsent').value = "0";
+            document.getElementById('inputAttitude').value = "TẬP TRUNG";
+            document.getElementById('inputHw').value = "Đã hoàn thành";
+            document.getElementById('inputSpirit').value = "Con học hành chăm chỉ, hăng hái phát biểu.";
+            document.getElementById('skillVocab').value = "5";
+            document.getElementById('skillListening').value = "5";
+            document.getElementById('skillAttitude').value = "5";
+            document.getElementById('skillHomework').value = "Xuất sắc";
+            document.getElementById('studentFormModal').classList.remove('hidden');
         }
 
-        // Sửa Học Sinh
-        function editStudent(id) {
+        // Mở Modal Sửa Học Sinh
+        function openEditStudentModal(id) {
             const st = appData[currentClassKey].students.find(s => s.id === id);
             if (!st) return;
 
-            const newName = prompt("Tên học sinh:", st.name);
-            if (newName === null) return;
-            const newSpirit = prompt("Nhận xét tinh thần học tập:", st.spirit);
-            const newHw = prompt("Tình trạng bài tập về nhà:", st.hw);
+            document.getElementById('formModalTitle').textContent = `Sửa Thông Tin: ${st.name}`;
+            document.getElementById('editStudentId').value = st.id;
+            document.getElementById('inputName').value = st.name;
+            document.getElementById('inputParent').value = st.parent || "";
+            document.getElementById('inputAbsent').value = st.absent || "0";
+            document.getElementById('inputAttitude').value = st.attitude || "TẬP TRUNG";
+            document.getElementById('inputHw').value = st.hw || "Đã hoàn thành";
+            document.getElementById('inputSpirit').value = st.spirit || "";
+            
+            if (st.skills) {
+                document.getElementById('skillVocab').value = st.skills.vocab || 5;
+                document.getElementById('skillListening').value = st.skills.listening || 5;
+                document.getElementById('skillAttitude').value = st.skills.attitude || 5;
+                document.getElementById('skillHomework').value = st.skills.homework || "Xuất sắc";
+            }
 
-            st.name = newName || st.name;
-            st.spirit = newSpirit || st.spirit;
-            st.hw = newHw || st.hw;
+            document.getElementById('studentFormModal').classList.remove('hidden');
+        }
+
+        function closeStudentFormModal() {
+            document.getElementById('studentFormModal').classList.add('hidden');
+        }
+
+        // Lưu Dữ Liệu Từ Form Sửa/Thêm
+        function handleStudentFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('editStudentId').value;
+            const name = document.getElementById('inputName').value;
+            const parent = document.getElementById('inputParent').value;
+            const absent = document.getElementById('inputAbsent').value;
+            const attitude = document.getElementById('inputAttitude').value;
+            const hw = document.getElementById('inputHw').value;
+            const spirit = document.getElementById('inputSpirit').value;
+            
+            const skills = {
+                vocab: parseInt(document.getElementById('skillVocab').value),
+                listening: parseInt(document.getElementById('skillListening').value),
+                attitude: parseInt(document.getElementById('skillAttitude').value),
+                homework: document.getElementById('skillHomework').value
+            };
+
+            if (id) {
+                const st = appData[currentClassKey].students.find(s => s.id == id);
+                if (st) {
+                    st.name = name;
+                    st.parent = parent;
+                    st.absent = absent;
+                    st.attitude = attitude;
+                    st.hw = hw;
+                    st.spirit = spirit;
+                    st.skills = skills;
+                    st.avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`;
+                }
+            } else {
+                const newSt = {
+                    id: Date.now(),
+                    name: name,
+                    parent: parent || "Phụ huynh",
+                    absent: absent || "0",
+                    attitude: attitude,
+                    spirit: spirit,
+                    hw: hw,
+                    skills: skills,
+                    sticker: "🌟 Super Star",
+                    avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`
+                };
+                appData[currentClassKey].students.push(newSt);
+            }
 
             saveData();
+            closeStudentFormModal();
             renderApp();
         }
 
@@ -475,11 +651,12 @@
                 appData = JSON.parse(JSON.stringify(defaultData));
                 currentClassKey = 'flyers7';
                 renderClassSelectOptions();
+                renderUnitSelectOptions();
                 renderApp();
             }
         }
 
-        // Modal Functions
+        // Modal Card Cá Nhân
         function openStudentModalDirect(st) {
             openStudentModal(st);
         }
@@ -492,23 +669,26 @@
             document.getElementById('modalSticker').textContent = st.sticker;
             document.getElementById('modalComment').textContent = st.spirit + ". Bài tập về nhà: " + st.hw + ".";
 
+            const sk = st.skills || { vocab: 5, listening: 5, attitude: 5, homework: "Đạt" };
+            const getStars = (num) => "⭐".repeat(num);
+
             const skillsContainer = document.getElementById('modalSkills');
             skillsContainer.innerHTML = `
                 <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-100">
                     <span class="text-slate-600 font-medium">Từ Vựng & Ngữ Pháp</span>
-                    <span class="text-amber-400 font-bold">⭐⭐⭐⭐⭐</span>
+                    <span class="text-amber-400 font-bold tracking-tight">${getStars(sk.vocab)}</span>
                 </div>
                 <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-100">
                     <span class="text-slate-600 font-medium">Nghe & Phát Âm</span>
-                    <span class="text-amber-400 font-bold">⭐⭐⭐⭐⭐</span>
+                    <span class="text-amber-400 font-bold tracking-tight">${getStars(sk.listening)}</span>
                 </div>
                 <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-100">
                     <span class="text-slate-600 font-medium">Thái Độ Tương Tác</span>
-                    <span class="text-amber-400 font-bold">⭐⭐⭐⭐⭐</span>
+                    <span class="text-amber-400 font-bold tracking-tight">${getStars(sk.attitude)}</span>
                 </div>
                 <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-100">
                     <span class="text-slate-600 font-medium">Hoàn Thành Bài Tập</span>
-                    <span class="text-emerald-600 font-bold">Đạt</span>
+                    <span class="text-emerald-600 font-bold">${sk.homework}</span>
                 </div>
             `;
 
@@ -529,9 +709,10 @@
 
         function copyCurrentStudentZalo() {
             if (!activeStudent) return;
-            const text = `🌟 [LIGHTHOUSE ENGLISH BY MS LINDA] 🌟\n-----------------------------\nBáo cáo học tập lớp: ${appData[currentClassKey].name}\nHọc sinh: ${activeStudent.name}\n- Thái độ học tập: ${activeStudent.attitude}\n- Tinh thần bài học: ${activeStudent.spirit}\n- Bài tập về nhà: ${activeStudent.hw}\n👉 Xem bảng chi tiết tại: ${window.location.origin}${window.location.pathname}?class=${currentClassKey}&student=${activeStudent.id}`;
+            const unitText = document.getElementById('unitSelect').value;
+            const text = `🌟 [LIGHTHOUSE ENGLISH BY MS LINDA] 🌟\n-----------------------------\nBáo cáo lớp: ${appData[currentClassKey].name}\nNội dung: ${unitText}\nHọc sinh: ${activeStudent.name}\n- Thái độ học tập: ${activeStudent.attitude}\n- Tinh thần bài học: ${activeStudent.spirit}\n- Bài tập về nhà: ${activeStudent.hw}\n👉 Xem bảng chi tiết tại: ${window.location.origin}${window.location.pathname}?class=${currentClassKey}&student=${activeStudent.id}`;
             navigator.clipboard.writeText(text).then(() => {
-                alert("Đã copy tin nhắn Zalo! Cô chỉ cần vào Zalo dán (Ctrl+V) để gửi cho phụ huynh.");
+                alert("Đã copy tin nhắn Zalo kèm tên buổi học! Cô chỉ cần vào Zalo dán (Ctrl+V) để gửi cho phụ huynh.");
             });
         }
     </script>
